@@ -9,90 +9,6 @@ document.body.appendChild(canvas)
 
 const ctx = canvas.getContext('2d');
 
-function Ball(x, y, radius) {
-    this.x = x;
-    this.y = y;
-
-    this.radius = radius;
-
-    this.velocity = { x: 5, y: 5 };
-
-    this.draw = function() {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill()
-    };
-
-    this.update = function() {
-
-        this.draw()
-
-        this.x += this.velocity.x
-        this.y += this.velocity.y
-
-        if (this.x < this.radius || this.x > canvas.width - this.radius) {
-            this.velocity.x = -this.velocity.x
-        } else if (this.y < this.radius || this.y > canvas.height - this.radius) {
-            this.velocity.y = -this.velocity.y 
-        }
-
-    };
-}
-
-function Brick(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-
-    this.width = width;
-    this.height = height;
-
-    this.state = false;
-
-    this.draw = function() {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-    };
-
-    this.update = function() {
-
-        this.draw();
-
-        
-        
-
-    };
-}
-
-function Paddle(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-
-    this.width = width;
-    this.height = height;
-
-    this.velocity = { x: 0, y: null };
-    this.acceleration = { x: 0, y: null };
-
-    this.draw = function() {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-
-    };
-
-    this.update = function() {
-
-        this.draw()
-
-        this.x += this.velocity.x
-
-        if (this.x < 0 || this.x > canvas.width - this.width) {
-            this.velocity.x = -this.velocity.x
-        } 
-
-    };
-}
-
 const bricks = [
     new Brick(100, 140, 70, 30),
     new Brick(200, 140, 70, 30),
@@ -165,11 +81,144 @@ const bricks = [
     new Brick(1500, 440, 70, 30),
     new Brick(1600, 440, 70, 30),
     new Brick(1700, 440, 70, 30),
-]
+];
 
-const ball = new Ball(canvas.width / 2, canvas.height / 2, 10);
+function Ball(x, y, radius) {
+    this.x = x;
+    this.y = y;
+
+    this.radius = radius;
+
+    this.velocity = { x: 5, y: 5 };
+
+    this.draw = function() {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill()
+
+        
+    };
+
+    this.update = function() {
+
+        this.draw()
+
+        collisionDetection(this, paddle, bricks)
+
+
+        this.x += this.velocity.x
+        this.y += this.velocity.y
+
+        if (this.x < this.radius || this.x > canvas.width - this.radius) {
+            this.velocity.x = -this.velocity.x
+        } else if (this.y < this.radius || this.y > canvas.height - this.radius) {
+            this.velocity.y = -this.velocity.y 
+        }
+
+    };
+}
+
+function Brick(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+
+    this.width = width;
+    this.height = height;
+
+    this.state = false;
+
+    this.draw = function() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    };
+
+    this.update = function() {
+
+        this.draw();
+
+        
+        
+
+    };
+}
+
+function Paddle(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+
+    this.width = width;
+    this.height = height;
+
+    this.velocity = { x: 0, y: null };
+    this.acceleration = { x: 0, y: null };
+
+    this.draw = function() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+    };
+
+    this.update = function() {
+
+        this.draw()
+
+        this.x += this.velocity.x
+
+        if (this.x < 0 || this.x > canvas.width - this.width) {
+            this.velocity.x = -this.velocity.x
+        } 
+
+    };
+}
+
+
+
+const ball = new Ball(canvas.width / 2, canvas.height - 100, 10);
 const paddle = new Paddle(canvas.width / 2, canvas.height - 30, 80, 20);
 
+function getDistance(circle, xHit, yHit) {
+
+    let distX = circle.x - xHit;
+    let distY = circle.y - yHit;
+
+    let distance = Math.sqrt((distX * distX) + (distY * distY));
+
+    if (distance <= circle.radius) {
+        console.log('hit')
+        return circle.velocity.y = -circle.velocity.y
+    }
+
+    return false;
+
+}
+
+function collisionDetection(circle, paddle, bricks) {
+    /*
+    If the circle is to the RIGHT of the square, check against the RIGHT edge.
+    else If the circle is to the LEFT of the square, check against the LEFT edge.
+
+    If the circle is ABOVE the square, check against the TOP edge.
+    else If the circle is to the BELOW the square, check against the BOTTOM edge.
+    */
+
+    let testX = circle.x;
+    let testY = circle.y;
+
+    if (circle.x < paddle.x) {
+        testX = paddle.x
+    } else if (circle.x > paddle.x + paddle.width) {
+        testX = paddle.x + paddle.width
+    } 
+
+    if (circle.y < paddle.y) {
+        testY = paddle.y
+    } else if (circle.y > paddle.y + paddle.height) {
+        testY = paddle.y + paddle.height
+    }
+
+    getDistance(circle, testX, testY)
+}
 
 function animate() {
     window.requestAnimationFrame(animate);
