@@ -9,79 +9,8 @@ document.body.appendChild(canvas)
 
 const ctx = canvas.getContext('2d');
 
-const bricks = [
-    new Brick(100, 140, 70, 30),
-    new Brick(200, 140, 70, 30),
-    new Brick(300, 140, 70, 30),
-    new Brick(400, 140, 70, 30),
-    new Brick(500, 140, 70, 30),
-    new Brick(600, 140, 70, 30),
-    new Brick(700, 140, 70, 30),
-    new Brick(800, 140, 70, 30),
-    new Brick(900, 140, 70, 30),
-    new Brick(1000, 140, 70, 30),
-    new Brick(1100, 140, 70, 30),
-    new Brick(1200, 140, 70, 30),
-    new Brick(1300, 140, 70, 30),
-    new Brick(1400, 140, 70, 30),
-    new Brick(1500, 140, 70, 30),
-    new Brick(1600, 140, 70, 30),
-    new Brick(1700, 140, 70, 30),
-
-    new Brick(100, 240, 70, 30),
-    new Brick(200, 240, 70, 30),
-    new Brick(300, 240, 70, 30),
-    new Brick(400, 240, 70, 30),
-    new Brick(500, 240, 70, 30),
-    new Brick(600, 240, 70, 30),
-    new Brick(700, 240, 70, 30),
-    new Brick(800, 240, 70, 30),
-    new Brick(900, 240, 70, 30),
-    new Brick(1000, 240, 70, 30),
-    new Brick(1100, 240, 70, 30),
-    new Brick(1200, 240, 70, 30),
-    new Brick(1300, 240, 70, 30),
-    new Brick(1400, 240, 70, 30),
-    new Brick(1500, 240, 70, 30),
-    new Brick(1600, 240, 70, 30),
-    new Brick(1700, 240, 70, 30),
-
-    new Brick(100, 340, 70, 30),
-    new Brick(200, 340, 70, 30),
-    new Brick(300, 340, 70, 30),
-    new Brick(400, 340, 70, 30),
-    new Brick(500, 340, 70, 30),
-    new Brick(600, 340, 70, 30),
-    new Brick(700, 340, 70, 30),
-    new Brick(800, 340, 70, 30),
-    new Brick(900, 340, 70, 30),
-    new Brick(1000, 340, 70, 30),
-    new Brick(1100, 340, 70, 30),
-    new Brick(1200, 340, 70, 30),
-    new Brick(1300, 340, 70, 30),
-    new Brick(1400, 340, 70, 30),
-    new Brick(1500, 340, 70, 30),
-    new Brick(1600, 340, 70, 30),
-    new Brick(1700, 340, 70, 30),
-
-    new Brick(100, 440, 70, 30),
-    new Brick(200, 440, 70, 30),
-    new Brick(300, 440, 70, 30),
-    new Brick(400, 440, 70, 30),
-    new Brick(500, 440, 70, 30),
-    new Brick(600, 440, 70, 30),
-    new Brick(700, 440, 70, 30),
-    new Brick(800, 440, 70, 30),
-    new Brick(900, 440, 70, 30),
-    new Brick(1000, 440, 70, 30),
-    new Brick(1100, 440, 70, 30),
-    new Brick(1200, 440, 70, 30),
-    new Brick(1300, 440, 70, 30),
-    new Brick(1400, 440, 70, 30),
-    new Brick(1500, 440, 70, 30),
-    new Brick(1600, 440, 70, 30),
-    new Brick(1700, 440, 70, 30),
-];
+let keyLeft = false;
+let keyRight = false;
 
 function Ball(x, y, radius) {
     this.x = x;
@@ -104,7 +33,7 @@ function Ball(x, y, radius) {
 
         this.draw()
 
-        collisionDetection(this, paddle, bricks)
+        collisionDetection(this, paddle)
 
 
         this.x += this.velocity.x
@@ -150,8 +79,9 @@ function Paddle(x, y, width, height) {
     this.width = width;
     this.height = height;
 
-    this.velocity = { x: 0, y: null };
-    this.acceleration = { x: 0, y: null };
+    this.speed = 1;
+    this.perPixel = 0;
+    this.force = 0;
 
     this.draw = function() {
         ctx.fillStyle = '#ffffff';
@@ -163,16 +93,57 @@ function Paddle(x, y, width, height) {
 
         this.draw()
 
-        this.x += this.velocity.x
+        // avoids paddle from leaving canvas
+        if (this.x <= 0 || this.x >= canvas.width - this.width) {
+            this.perPixel = -this.perPixel
+            this.perPixel = 0
 
-        if (this.x < 0 || this.x > canvas.width - this.width) {
-            this.velocity.x = -this.velocity.x
+            // prevent the paddle from glitching at the bottom left/right corners
+            this.x = this.x <= 0 ? 0 : canvas.width - this.width
         } 
 
+        if (keyLeft) {
+            this.force--;
+        }
+
+        if (keyRight) {
+            this.force++;
+        }
+
+        if (this.force > this.speed) {
+            this.force = this.speed
+        }
+
+        if (this.force < -this.speed) {
+            this.force = -this.speed
+        }
+
+        if (!keyLeft && !keyRight) {
+            this.perPixel = 0;
+            this.force = 0;
+        } else {
+            this.perPixel += this.force
+        }
+
+        this.x += this.perPixel;
     };
+
+    this.handleKeyDown = function(event) {
+        if (event.keyCode === 37) {
+            keyLeft = true;
+        } else if (event.keyCode === 39) {
+            keyRight = true;
+        }
+    }
+
+    this.handleKeyUp = function(event) {
+        if (event.keyCode == 37) {
+            keyLeft = false;
+        } else if (event.keyCode == 39) {
+            keyRight = false;
+        }
+    }
 }
-
-
 
 const ball = new Ball(canvas.width / 2, canvas.height - 100, 10);
 const paddle = new Paddle(canvas.width / 2, canvas.height - 30, 80, 20);
@@ -230,30 +201,8 @@ function animate() {
 
     // control the paddle
     paddle.update();
-
-    // generate the bricks
-    for (let brick of bricks) {
-        brick.update();
-    }
 }
 
-const [ leftArrowPressed, rightArrowPressed ] = [ 37, 39 ]
-const speedOfPaddle = 8;
-
-
-window.addEventListener('keydown', event => {
-
-    switch(event.keyCode) {
-
-        case leftArrowPressed:
-            paddle.velocity.x = -speedOfPaddle
-            break;
-
-        case rightArrowPressed:
-            paddle.velocity.x = speedOfPaddle;
-            break;
-    }
-
-});
-
+window.addEventListener('keydown', event => paddle.handleKeyDown(event));
+window.addEventListener('keyup', event => paddle.handleKeyUp(event));
 window.requestAnimationFrame(animate)
