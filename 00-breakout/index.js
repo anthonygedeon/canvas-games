@@ -35,7 +35,6 @@ function Ball(x, y, radius) {
 
         collisionDetection(this, paddle)
 
-
         this.x += this.velocity.x
         this.y += this.velocity.y
 
@@ -43,6 +42,12 @@ function Ball(x, y, radius) {
             this.velocity.x = -this.velocity.x
         } else if (this.y < this.radius || this.y > canvas.height - this.radius) {
             this.velocity.y = -this.velocity.y 
+        }
+
+        if (this.y > canvas.height - this.radius) {
+            this.y = canvas.height / 2 - 100
+            this.velocity.x = -5
+            this.velocity.y = 5
         }
 
     };
@@ -95,7 +100,6 @@ function Paddle(x, y, width, height) {
 
         // avoids paddle from leaving canvas
         if (this.x <= 0 || this.x >= canvas.width - this.width) {
-            this.perPixel = -this.perPixel
             this.perPixel = 0
 
             // prevent the paddle from glitching at the bottom left/right corners
