@@ -12,6 +12,11 @@ const ctx = canvas.getContext('2d');
 let keyLeft = false;
 let keyRight = false;
 
+const bricks = [
+    new Brick(100, 100, 80, 30),
+    new Brick(200, 100, 80, 30),
+];
+
 function Ball(x, y, radius) {
     this.x = x;
     this.y = y;
@@ -24,9 +29,7 @@ function Ball(x, y, radius) {
         ctx.fillStyle = '#ffffff';
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill()
-
-        
+        ctx.fill()  
     };
 
     this.update = function() {
@@ -44,10 +47,11 @@ function Ball(x, y, radius) {
             this.velocity.y = -this.velocity.y 
         }
 
+        // reset ball when it hits bottom
         if (this.y > canvas.height - this.radius) {
-            this.y = canvas.height / 2 - 100
-            this.velocity.x = -5
-            this.velocity.y = 5
+            // this.y = canvas.height / 2 - 100
+            // this.velocity.x = -5
+            // this.velocity.y = 5
         }
 
     };
@@ -70,9 +74,6 @@ function Brick(x, y, width, height) {
     this.update = function() {
 
         this.draw();
-
-        
-        
 
     };
 }
@@ -168,7 +169,7 @@ function getDistance(circle, xHit, yHit) {
 
 }
 
-function collisionDetection(circle, paddle, bricks) {
+function collisionDetection(circle, paddle) {
     /*
     If the circle is to the RIGHT of the square, check against the RIGHT edge.
     else If the circle is to the LEFT of the square, check against the LEFT edge.
@@ -205,8 +206,15 @@ function animate() {
 
     // control the paddle
     paddle.update();
+
+    // display bricks on canvas
+    for (let brick of bricks) {
+        brick.update()
+    }
 }
 
 window.addEventListener('keydown', event => paddle.handleKeyDown(event));
 window.addEventListener('keyup', event => paddle.handleKeyUp(event));
 window.requestAnimationFrame(animate)
+
+// get to work
