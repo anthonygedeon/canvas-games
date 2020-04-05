@@ -12,10 +12,26 @@ const ctx = canvas.getContext('2d');
 let keyLeft = false;
 let keyRight = false;
 
-const bricks = [
-    new Brick(100, 100, 80, 30),
-    new Brick(200, 100, 80, 30),
-];
+const bricks = [];
+
+function generateBricks() {
+    let xPosition = 100;
+    let yPosition = 100;
+
+    const brickXPositionLimit = 1800
+
+    for (let i = 0; i < 36; i++) {
+        bricks.push(new Brick(xPosition, yPosition, 80, 30))
+        xPosition += 200
+
+        if (xPosition > brickXPositionLimit) {
+            yPosition += 80
+            xPosition = 100
+        }
+    }
+}
+
+generateBricks()
 
 function Ball(x, y, radius) {
     this.x = x;
@@ -151,7 +167,7 @@ function Paddle(x, y, width, height) {
 }
 
 const ball = new Ball(canvas.width / 2, canvas.height - 100, 10);
-const paddle = new Paddle(canvas.width / 2, canvas.height - 30, 80, 20);
+const paddle = new Paddle(canvas.width / 2, canvas.height - 30, 90, 20);
 
 function getDistance(circle, xHit, yHit) {
 
