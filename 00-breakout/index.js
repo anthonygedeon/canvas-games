@@ -14,7 +14,7 @@ let keyRight = false;
 
 const bricks = [];
 
-function generateBricks() {
+const generateBricksLayout = (() => {
     let xPosition = 100;
     let yPosition = 100;
 
@@ -29,9 +29,7 @@ function generateBricks() {
             xPosition = 100
         }
     }
-}
-
-generateBricks()
+})();
 
 function Ball(x, y, radius) {
     this.x = x;
