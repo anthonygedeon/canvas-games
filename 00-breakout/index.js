@@ -85,7 +85,7 @@ function Paddle(x, y, width, height) {
     this.width = width;
     this.height = height;
 
-    this.speed = 1;
+    this.speed = 8;
     this.perPixel = 0;
     this.force = 0;
 
@@ -127,7 +127,7 @@ function Paddle(x, y, width, height) {
             this.perPixel = 0;
             this.force = 0;
         } else {
-            this.perPixel += this.force
+            this.perPixel = this.force
         }
 
         this.x += this.perPixel;
