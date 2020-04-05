@@ -216,5 +216,3 @@ function animate() {
 window.addEventListener('keydown', event => paddle.handleKeyDown(event));
 window.addEventListener('keyup', event => paddle.handleKeyUp(event));
 window.requestAnimationFrame(animate)
-
-// get to work
