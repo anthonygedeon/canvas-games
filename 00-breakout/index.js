@@ -89,6 +89,7 @@ function Brick(x, y, width, height) {
 
         this.draw();
 
+        collisionDetection(ball, bricks[0]);
     };
 }
 
@@ -175,7 +176,6 @@ function getDistance(circle, xHit, yHit) {
     let distance = Math.sqrt((distX * distX) + (distY * distY));
 
     if (distance <= circle.radius) {
-        console.log('hit')
         return circle.velocity.y = -circle.velocity.y
     }
 
@@ -225,6 +225,8 @@ function animate() {
     for (let brick of bricks) {
         brick.update()
     }
+
+    bricks[0].update()
 }
 
 window.addEventListener('keydown', event => paddle.handleKeyDown(event));
