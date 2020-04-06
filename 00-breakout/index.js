@@ -12,11 +12,13 @@ const ctx = canvas.getContext('2d');
 let keyLeft = false;
 let keyRight = false;
 
+let pointEarned = 0;
+
 let bricks = [];
 
 const generateBricksLayout = (() => {
     let xPosition = 100;
-    let yPosition = 100;
+    let yPosition = 200;
 
     const brickXPositionLimit = 1800
 
@@ -30,6 +32,20 @@ const generateBricksLayout = (() => {
         }
     }
 })();
+
+function Scoreboard() {
+
+    this.draw = function() {
+        ctx.fillStyle = '#ffffffff';
+        ctx.font = '40px Arial';
+        ctx.fillText(`Score: ${pointEarned}`, 100, 100)
+    };
+
+    this.update = function() {
+
+        this.draw()
+    };
+}
 
 function Ball(x, y, radius) {
     this.x = x;
@@ -51,8 +67,9 @@ function Ball(x, y, radius) {
         this.draw()
 
         if (collisionDetection(this, paddle)) {
+            let direction = [-5, 5];
+            this.velocity.x = direction[Math.floor(Math.random() * 2)]
             this.velocity.y = -this.velocity.y;
-            
         }
 
         this.x += this.velocity.x
@@ -66,8 +83,9 @@ function Ball(x, y, radius) {
 
         // reset ball when it hits bottom
         if (this.y > canvas.height - this.radius) {
-            this.y = canvas.height / 2
-            this.velocity.x = -5
+            this.y = canvas.height / 1.5;
+            this.x = canvas.width / 2;
+            this.velocity.x = 0
             this.velocity.y = 5
         }
 
@@ -105,6 +123,9 @@ function Brick(x, y, width, height, state) {
                 bricks[this.bricksTotal].y = 0
                 bricks[this.bricksTotal].x = 0
                 
+
+                // give player point
+                pointEarned++
 
             }
 
@@ -193,6 +214,7 @@ function Paddle(x, y, width, height) {
 
 const ball = new Ball(canvas.width / 2, canvas.height - 100, 10);
 const paddle = new Paddle(canvas.width / 2, canvas.height - 30, 90, 20);
+const score = new Scoreboard(); // does not work when i set pointEarned as a parameter
 
 function getDistance(circle, xHit, yHit) {
 
@@ -254,6 +276,8 @@ function animate() {
 
     // without this, none the collision detection works for the bricks
     bricks[0].update()
+
+    score.update();
 }
 
 window.addEventListener('keydown', event => paddle.handleKeyDown(event));
