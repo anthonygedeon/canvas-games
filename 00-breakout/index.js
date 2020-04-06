@@ -12,7 +12,7 @@ const ctx = canvas.getContext('2d');
 let keyLeft = false;
 let keyRight = false;
 
-const bricks = [];
+let bricks = [];
 
 const generateBricksLayout = (() => {
     let xPosition = 100;
@@ -21,7 +21,7 @@ const generateBricksLayout = (() => {
     const brickXPositionLimit = 1800
 
     for (let i = 0; i < 36; i++) {
-        bricks.push(new Brick(xPosition, yPosition, 80, 30))
+        bricks.push(new Brick(xPosition, yPosition, 80, 30, false))
         xPosition += 200
 
         if (xPosition > brickXPositionLimit) {
@@ -50,7 +50,10 @@ function Ball(x, y, radius) {
 
         this.draw()
 
-        collisionDetection(this, paddle)
+        if (collisionDetection(this, paddle)) {
+            this.velocity.y = -this.velocity.y;
+            
+        }
 
         this.x += this.velocity.x
         this.y += this.velocity.y
@@ -63,22 +66,23 @@ function Ball(x, y, radius) {
 
         // reset ball when it hits bottom
         if (this.y > canvas.height - this.radius) {
-            // this.y = canvas.height / 2 - 100
-            // this.velocity.x = -5
-            // this.velocity.y = 5
+            this.y = canvas.height / 2
+            this.velocity.x = -5
+            this.velocity.y = 5
         }
 
     };
 }
 
-function Brick(x, y, width, height) {
+function Brick(x, y, width, height, state) {
     this.x = x;
     this.y = y;
 
     this.width = width;
     this.height = height;
+    this.bricksTotal = 0
 
-    this.state = false;
+    this.state = state;
 
     this.draw = function() {
         ctx.fillStyle = '#ffffff';
@@ -89,7 +93,29 @@ function Brick(x, y, width, height) {
 
         this.draw();
 
-        collisionDetection(ball, bricks[0]);
+        while (true) {
+
+            if (collisionDetection(ball, bricks[this.bricksTotal])) {
+                // change the direction of the ball
+                ball.velocity.y = -ball.velocity.y;
+
+                // if ball was hit then remove it from canvas
+                bricks[this.bricksTotal].width = 0
+                bricks[this.bricksTotal].height = 0
+                bricks[this.bricksTotal].y = 0
+                bricks[this.bricksTotal].x = 0
+                
+
+            }
+
+            if (this.bricksTotal === 35) {
+                this.bricksTotal = 0
+                break;
+            }
+
+            this.bricksTotal++
+        }
+
     };
 }
 
@@ -176,14 +202,14 @@ function getDistance(circle, xHit, yHit) {
     let distance = Math.sqrt((distX * distX) + (distY * distY));
 
     if (distance <= circle.radius) {
-        return circle.velocity.y = -circle.velocity.y
+        return true
     }
 
     return false;
 
 }
 
-function collisionDetection(circle, paddle) {
+function collisionDetection(circle, objectToCollide) {
     /*
     If the circle is to the RIGHT of the square, check against the RIGHT edge.
     else If the circle is to the LEFT of the square, check against the LEFT edge.
@@ -195,19 +221,19 @@ function collisionDetection(circle, paddle) {
     let testX = circle.x;
     let testY = circle.y;
 
-    if (circle.x < paddle.x) {
-        testX = paddle.x
-    } else if (circle.x > paddle.x + paddle.width) {
-        testX = paddle.x + paddle.width
+    if (circle.x < objectToCollide.x) {
+        testX = objectToCollide.x
+    } else if (circle.x > objectToCollide.x + objectToCollide.width) {
+        testX = objectToCollide.x + objectToCollide.width
     } 
 
-    if (circle.y < paddle.y) {
-        testY = paddle.y
-    } else if (circle.y > paddle.y + paddle.height) {
-        testY = paddle.y + paddle.height
+    if (circle.y < objectToCollide.y) {
+        testY = objectToCollide.y
+    } else if (circle.y > objectToCollide.y + objectToCollide.height) {
+        testY = objectToCollide.y + objectToCollide.height
     }
 
-    getDistance(circle, testX, testY)
+    return getDistance(circle, testX, testY)
 }
 
 function animate() {
@@ -226,6 +252,7 @@ function animate() {
         brick.update()
     }
 
+    // without this, none the collision detection works for the bricks
     bricks[0].update()
 }
 
