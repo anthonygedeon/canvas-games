@@ -8,12 +8,13 @@ document.body.appendChild(canvas)
 
 const ctx = canvas.getContext('2d');
 
+let snakeLength = [];
+
 function collisionDetection(object, objectToCollideWith) {
     if (object.x < objectToCollideWith.x + objectToCollideWith.width &&
         object.x + object.width > objectToCollideWith.x &&
         object.y < objectToCollideWith.y + objectToCollideWith.height &&
         object.y + object.height > objectToCollideWith.y) {
-        console.log('hit')
             return true
     } 
 
@@ -29,7 +30,8 @@ function Snake(x, y, width, height) {
     this.velocity = { x: 0, y: 0 };
 
     this.draw = function() {
-        ctx.fillStyle = '#fff';
+
+        ctx.fillStyle = 'green';
         ctx.fillRect(this.x, this.y, this.width, this.height);
 
     }
@@ -87,10 +89,16 @@ function animate() {
     if (collisionDetection(apple, snake)) {
         apple.x = Math.floor(Math.random() * canvas.width)
         apple.y = Math.floor(Math.random() * canvas.height)
+        snakeLength.push(new Snake(snake.x, snake.y, 20, 20))
     }
 
+    if (snakeLength.length >= 1) {
+        for (let snakePiece of snakeLength) {
+            snakePiece.update()
+        }
+    }
+    
     apple.update()
-
 }
 
 window.addEventListener('keydown', event => {
@@ -109,9 +117,6 @@ window.addEventListener('keydown', event => {
         snake.velocity.y = -4
         snake.velocity.x = 0;
     }
-
-    
-
 
 })
 
