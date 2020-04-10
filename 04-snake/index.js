@@ -77,7 +77,7 @@ function Apple(x, y) {
 }
 
 const snake = new Snake(canvas.width / 2, canvas.height / 2, 20, 20);
-const apple = new Apple(Math.floor(Math.random() * canvas.width), Math.floor(Math.random() * canvas.height))
+const apple = new Apple(Math.floor(Math.random() * canvas.width) - 9, Math.floor(Math.random() * canvas.height) - 9)
 
 function animate() {
     window.requestAnimationFrame(animate)
