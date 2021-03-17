@@ -1,6 +1,11 @@
-import pygame
 import random
+import os
 
+import pygame
+
+class Color:
+    white = (255, 255, 255)
+    black = (0, 0, 0)
 
 class Player:
     def __init__(self):
@@ -14,12 +19,6 @@ class Player:
     def get_current_score(self):
         return self.score
 
-
-class Color:
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-
-
 class Start:
 
     width = 800
@@ -30,7 +29,11 @@ class Start:
         pygame.init()
         pygame.key.set_repeat(50, 50)
 
+        player_1 = Player()
+        player_2 = Player()
+    
         pygame.display.set_caption("Pong")
+        font = pygame.font.Font(os.path.join("pong", "font", "Pong.ttf"), 72)
 
         pong_ball = PongBall()
         left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
@@ -52,11 +55,11 @@ class Start:
         self.pong_sprites = pygame.sprite.Group()
 
         # Handle position of LEFT Paddle
-        left_paddle.rect.y = (self.height - left_paddle.height) / 2
+        left_paddle.rect.y = (self.height - left_paddle.height) // 2
         left_paddle.rect.x = self.MARGIN_LEFT
 
         # Handle position of RIGHT Paddle
-        right_paddle.rect.y = (self.height - right_paddle.height) / 2
+        right_paddle.rect.y = (self.height - right_paddle.height) // 2
         right_paddle.rect.x = self.MARGIN_RIGHT
 
         # Position the Pong Ball in the center of window
@@ -86,12 +89,20 @@ class Start:
 
             if pong_ball.rect.x > self.width:
                 pong_ball.spawn()
+                player_1.add_to_score()
             elif pong_ball.rect.x < 0:
                 pong_ball.spawn()
+                player_2.add_to_score()
             elif pong_ball.rect.y < 0:
                 pong_ball.vector = pygame.Vector2(10, -10)
             elif pong_ball.rect.y > self.height:
                 pong_ball.vector = pygame.Vector2(10, 10)
+
+            score_1 = font.render(str(player_1.get_current_score), True, Color.white)
+            score_2 = font.render(str(player_2.get_current_score), True, Color.white)
+
+            self.screen.blit(score_1, (((self.width - 58) // 2) - 150, 20))
+            self.screen.blit(score_2, (((self.width - 58) // 2) + 150, 20))
 
             pygame.display.flip()
 
@@ -119,8 +130,8 @@ class PongBall(pygame.sprite.Sprite):
 
     def spawn(self):
         self.vector = pygame.Vector2(10, 1)
-        self.rect.x = Start.width / 2
-        self.rect.y = Start.height / 2
+        self.rect.x = Start.width // 2
+        self.rect.y = Start.height // 2
 
     def update(self):
         self.rect.x -= self.vector.x
@@ -170,7 +181,6 @@ class Button:
 
 class Transition:
     pass
-
 
 if __name__ == "__main__":
     Start()
