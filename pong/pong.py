@@ -19,6 +19,7 @@ class ScoreBoard:
     def get_current_score(self):
         return self.score
 
+
 class Start:
 
     width = 800
@@ -29,8 +30,8 @@ class Start:
         pygame.init()
         pygame.key.set_repeat(50, 50)
 
-        player_1 = ScoreBoard()
-        player_2 = ScoreBoard()
+        score_left = ScoreBoard()
+        score_right = ScoreBoard()
     
         pygame.display.set_caption("Pong")
         font = pygame.font.Font(os.path.join("pong", "font", "Pong.ttf"), 72)
@@ -76,41 +77,32 @@ class Start:
                     self.running = False
 
             self.screen.fill(Color.black)
-
-            self.clock.tick(self.fps)
-
             self.pong_sprites.draw(self.screen)
 
             # Draw Net
-            for box in range(0, self.widths, 40):
+            for box in range(0, self.width, 40):
                 pygame.draw.rect(self.screen, Color.white, [self.width // 2, box, 10, 20])
 
             # Collision Detection for Ping Pong Ball
-            if pong_ball.rect.colliderect(left_paddle.rect):
-                pong_ball.vector = pygame.Vector2(-10, random.randrange(0, 10))
-            elif pong_ball.rect.colliderect(right_paddle.rect):
-                pong_ball.vector = pygame.Vector2(10, (random.randrange(0, 10) * -1))
+            pong_ball.handle_collision_detection(left_paddle, right_paddle)
 
+            # This makes sure that the pong ball doesn't leave the window
             if pong_ball.rect.x > self.width:
                 pong_ball.spawn()
-                player_1.add_to_score()
+                score_left.add_to_score()
             elif pong_ball.rect.x < 0:
                 pong_ball.spawn()
-                player_2.add_to_score()
-            elif pong_ball.rect.y < 0:
-                pong_ball.vector = pygame.Vector2(10, -10)
-            elif pong_ball.rect.y > self.height:
-                pong_ball.vector = pygame.Vector2(10, 10)
+                score_right.add_to_score()
 
-            score_1 = font.render(str(player_1.get_current_score), True, Color.white)
-            score_2 = font.render(str(player_2.get_current_score), True, Color.white)
+            score_1 = font.render(str(score_left.get_current_score), True, Color.white)
+            score_2 = font.render(str(score_right.get_current_score), True, Color.white)
 
             self.screen.blit(score_1, (((self.width - 58) // 2) - 150, 20))
             self.screen.blit(score_2, (((self.width - 58) // 2) + 150, 20))
 
             pygame.display.flip()
-
             pygame.display.update()
+            self.clock.tick(self.fps)
 
         pygame.quit()
 
@@ -128,12 +120,23 @@ class PongBall(pygame.sprite.Sprite):
 
         pygame.draw.rect(self.image, Color.white, [0, 0, self.width, self.height])
 
-        self.vector = pygame.Vector2(10, 1)
+        self.vector = pygame.Vector2(10, 0)
 
         self.rect = self.image.get_rect()
 
+    def handle_collision_detection(self, object_a, object_b):
+        if self.rect.colliderect(object_a.rect):
+            self.vector = pygame.Vector2(-10, random.randrange(0, 10))
+        elif self.rect.colliderect(object_b.rect):
+            self.vector = pygame.Vector2(10, (random.randrange(0, 10) * -1))
+
+        if self.rect.y < 0:
+            self.vector = pygame.Vector2(10, -10)
+        elif self.rect.y > Start.height:
+            self.vector = pygame.Vector2(10, 10)
+
     def spawn(self):
-        self.vector = pygame.Vector2(10, 1)
+        self.vector = self.vector
         self.rect.x = Start.width // 2
         self.rect.y = Start.height // 2
 
@@ -141,10 +144,8 @@ class PongBall(pygame.sprite.Sprite):
         self.rect.x -= self.vector.x
         self.rect.y -= self.vector.y
 
-
 class Move:
     pass
-
 
 class PongPaddle(pygame.sprite.Sprite):
     def __init__(self, pressed_up, pressed_down):
@@ -164,19 +165,22 @@ class PongPaddle(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
+    def handle_collision_detection(self):
+        if self.rect.bottom > Start.height:
+            self.rect.y = Start.height - self.rect.height
+        elif self.rect.top < 0:
+            self.rect.y = 0
+
     def update(self):
         keys = pygame.key.get_pressed()
+
         if keys[self.pressed_up]:
             self.rect.y -= 10
 
         if keys[self.pressed_down]:
             self.rect.y += 10
 
-        # Collision Detection for Paddle
-        if self.rect.bottom > Start.height:
-            self.rect.y = Start.height - self.rect.height
-        elif self.rect.top < 0:
-            self.rect.y = 0
+        self.handle_collision_detection()
 
 
 class Button:
