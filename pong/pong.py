@@ -7,7 +7,7 @@ class Color:
     white = (255, 255, 255)
     black = (0, 0, 0)
 
-class Player:
+class ScoreBoard:
     def __init__(self):
         self.score = 0
 
@@ -29,8 +29,8 @@ class Start:
         pygame.init()
         pygame.key.set_repeat(50, 50)
 
-        player_1 = Player()
-        player_2 = Player()
+        player_1 = ScoreBoard()
+        player_2 = ScoreBoard()
     
         pygame.display.set_caption("Pong")
         font = pygame.font.Font(os.path.join("pong", "font", "Pong.ttf"), 72)
@@ -80,6 +80,10 @@ class Start:
             self.clock.tick(self.fps)
 
             self.pong_sprites.draw(self.screen)
+
+            # Draw Net
+            for box in range(0, self.widths, 40):
+                pygame.draw.rect(self.screen, Color.white, [self.width // 2, box, 10, 20])
 
             # Collision Detection for Ping Pong Ball
             if pong_ball.rect.colliderect(left_paddle.rect):
