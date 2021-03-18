@@ -1,4 +1,3 @@
-import random
 import os
 
 import pygame
@@ -20,27 +19,11 @@ class ScoreBoard:
     def get_current_score(self):
         return self.score
 
-class Mouse2DBox(pygame.sprite.Sprite):
+class Mouse2DPoint():
     
-    def __init__(self):
-        super().__init__()
-
-        self.width = 20
-        self.height = self.width
-
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.set_alpha(1)
-        self.image.fill(Color.black)
-        self.image.set_colorkey()
-
-        pygame.draw.rect(self.image, Color.black, [0, 0, self.width, self.height])
-
-        self.rect = self.image.get_rect()
-
-    def update(self):
-        x_mouse, y_mouse = pygame.mouse.get_pos()
-        self.rect.x = x_mouse
-        self.rect.y = y_mouse
+    @property
+    def get_mouse_pos(self):
+        return pygame.mouse.get_pos()
 
 class Start:
 
@@ -63,7 +46,7 @@ class Start:
         pong_ball = PongBall()
         left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
         right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
-        mouse_collider = Mouse2DBox()
+        mouse = Mouse2DPoint()
         
         # Buttons
         play_button = Button(Color.white, "PLAY", 48, ((self.width - 160) // 2, 180))
@@ -96,15 +79,14 @@ class Start:
         right_paddle.rect.x = self.MARGIN_RIGHT
 
         # Position the Pong Ball in the center of window
-        pong_ball.spawn()
+        pong_ball.spawn((5, 5))
 
         self.pong_sprites.add(pong_ball, left_paddle, right_paddle)
-        self.start_menu_sprites.add(mouse_collider, play_button, quit_button)
+        self.start_menu_sprites.add(play_button, quit_button)
 
         while self.running:
 
             if self.is_playing:
-
                 self.pong_sprites.update()
 
                 self.screen.fill(Color.black)
@@ -119,10 +101,10 @@ class Start:
 
                 # This makes sure that the pong ball is touching the window frame
                 if pong_ball.rect.x > self.width:
-                    pong_ball.spawn()
+                    pong_ball.spawn((-5, 5))
                     score_left.add_point()
                 elif pong_ball.rect.x < 0:
-                    pong_ball.spawn()
+                    pong_ball.spawn((5, 5))
                     score_right.add_point()
 
                 score_1 = font.render(str(score_left.get_current_score), True, Color.white)
@@ -146,9 +128,9 @@ class Start:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         self.running = False
-                    elif event.type == pygame.MOUSEBUTTONDOWN and mouse_collider.rect.colliderect(play_button.rect):
+                    elif play_button.is_clicked(event, mouse.get_mouse_pos):
                         self.is_playing = True
-                    elif event.type == pygame.MOUSEBUTTONDOWN and mouse_collider.rect.colliderect(quit_button.rect):
+                    elif quit_button.is_clicked(event, mouse.get_mouse_pos):
                         self.running = False
 
             for event in pygame.event.get():
@@ -157,7 +139,6 @@ class Start:
 
             pygame.display.flip()
             pygame.display.update()
-            self.clock.tick(self.fps)
 
         pygame.quit()
 
@@ -179,11 +160,7 @@ class PongBall(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
     def handle_collision_detection(self, object_a, object_b):
-        if self.rect.colliderect(object_a.rect):
-            self.play_sound()
-            self.velocity.x = -self.velocity.x
-        
-        if self.rect.colliderect(object_b.rect):
+        if self.rect.colliderect(object_a.rect) or self.rect.colliderect(object_b.rect):
             self.play_sound()
             self.velocity.x = -self.velocity.x
 
@@ -197,8 +174,10 @@ class PongBall(pygame.sprite.Sprite):
         hit_sound = pygame.mixer.Sound(os.path.join("pong", "sounds", "pong-sound.mp3"))
         pygame.mixer.Sound.play(hit_sound)
 
-    def spawn(self):
-        self.velocity = self.velocity
+    def spawn(self, vector):
+        x, y = vector
+
+        self.velocity = pygame.Vector2(x, y)
         self.rect.x = Start.width // 2
         self.rect.y = Start.height // 2
 
@@ -272,11 +251,15 @@ class Button(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
+    def is_clicked(self, press, mouse_pos):
+        if press.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(mouse_pos):
+            return True
+        return False
+
     def render(self, screen):
         x, y = self.position
         self.rect.x = x
         self.rect.y = y
-
         screen.blit(self.button_inner_text, (x, y))
 
 class Scene:
