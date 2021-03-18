@@ -181,8 +181,10 @@ class PongBall(pygame.sprite.Sprite):
     def handle_collision_detection(self, object_a, object_b):
         if self.rect.colliderect(object_a.rect):
             self.vector = pygame.Vector2(-10, random.randrange(0, 10))
+            self.sound()
         elif self.rect.colliderect(object_b.rect):
             self.vector = pygame.Vector2(10, (random.randrange(0, 10) * -1))
+            self.sound()
 
         # Sim
         if self.rect.y < 0:
@@ -190,14 +192,18 @@ class PongBall(pygame.sprite.Sprite):
         elif self.rect.y > Start.height:
             self.vector = pygame.Vector2(10, 10)
 
+    def sound(self):
+        hit_sound = pygame.mixer.Sound(os.path.join("pong", "sounds", "pong-sound.mp3"))
+        pygame.mixer.Sound.play(hit_sound)
+
     def spawn(self):
         self.vector = self.vector
         self.rect.x = Start.width // 2
         self.rect.y = Start.height // 2
 
     def update(self):
-        self.rect.x += self.velocity
-        self.rect.y += self.velocity
+        self.rect.x -= self.vector.x
+        self.rect.y -= self.vector.y
 
 class Move:
     pass
