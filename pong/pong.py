@@ -6,12 +6,13 @@ import pygame
 class Color:
     white = (255, 255, 255)
     black = (0, 0, 0)
+    light_gray = (211, 211, 211)
 
 class ScoreBoard:
     def __init__(self):
         self.score = 0
 
-    def add_to_score(self):
+    def add_point(self):
         self.score += 1
         return self.score
 
@@ -57,13 +58,15 @@ class Start:
         
         font = pygame.font.Font(os.path.join("pong", "font", "slkscrb.ttf"), 72)
         menu_title = pygame.font.Font(os.path.join("pong", "font", "slkscrb.ttf"), 102)
-        button_font = pygame.font.Font(os.path.join("pong", "font", "slkscrb.ttf"), 48)
 
         pong_ball = PongBall()
         left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
         right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
         mouse_collider = Mouse2DBox()
-        play_button = Button("PLAY", 48)
+        
+        # Buttons
+        play_button = Button(Color.white, "PLAY", 48, ((self.width - 160) // 2, 180))
+        quit_button = Button(Color.white, "QUIT", 48, ((self.width - 140) // 2, 240))
 
         # Clock Settings
         self.fps = 60
@@ -95,7 +98,7 @@ class Start:
         pong_ball.spawn()
 
         self.pong_sprites.add(pong_ball, left_paddle, right_paddle)
-        self.start_menu_sprites.add(mouse_collider, play_button)
+        self.start_menu_sprites.add(mouse_collider, play_button, quit_button)
 
         while self.running:
 
@@ -113,13 +116,13 @@ class Start:
                 # Collision Detection for Ping Pong Ball
                 pong_ball.handle_collision_detection(left_paddle, right_paddle)
 
-                # This makes sure that the pong ball doesn't leave the window
+                # This makes sure that the pong ball is touching the window frame
                 if pong_ball.rect.x > self.width:
                     pong_ball.spawn()
-                    score_left.add_to_score()
+                    score_left.add_point()
                 elif pong_ball.rect.x < 0:
                     pong_ball.spawn()
-                    score_right.add_to_score()
+                    score_right.add_point()
 
                 score_1 = font.render(str(score_left.get_current_score), True, Color.white)
                 score_2 = font.render(str(score_right.get_current_score), True, Color.white)
@@ -134,19 +137,18 @@ class Start:
                 self.start_menu_sprites.draw(self.screen)
 
                 title = menu_title.render("Pong", True, Color.white)
-                play_button_text = button_font.render("PLAY", True, Color.black)
 
-                play_button.rect.x = (self.width - 160) // 2
-                play_button.rect.y = 180
-
-                # Hacky stuff, but it positions the Menu starts at the correct location
-                self.screen.blit(title, (((self.width - 340) // 2), 20))
-                self.screen.blit(play_button_text, (((self.width - 160) // 2), 180))
+                self.screen.blit(title, (((self.width - title.get_width()) // 2), 20))
+                play_button.render(self.screen)
+                quit_button.render(self.screen)
 
                 for event in pygame.event.get():
-                        if event.type == pygame.MOUSEBUTTONDOWN:
-                            if mouse_collider.rect.colliderect(play_button.rect):
-                                self.is_playing = True
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                    elif event.type == pygame.MOUSEBUTTONDOWN and mouse_collider.rect.colliderect(play_button.rect):
+                        self.is_playing = True
+                    elif event.type == pygame.MOUSEBUTTONDOWN and mouse_collider.rect.colliderect(quit_button.rect):
+                        self.running = False
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -171,6 +173,7 @@ class PongBall(pygame.sprite.Sprite):
 
         pygame.draw.rect(self.image, Color.white, [0, 0, self.width, self.height])
 
+        self.velocity = 10
         self.vector = pygame.Vector2(10, 0)
 
         self.rect = self.image.get_rect()
@@ -181,6 +184,7 @@ class PongBall(pygame.sprite.Sprite):
         elif self.rect.colliderect(object_b.rect):
             self.vector = pygame.Vector2(10, (random.randrange(0, 10) * -1))
 
+        # Sim
         if self.rect.y < 0:
             self.vector = pygame.Vector2(10, -10)
         elif self.rect.y > Start.height:
@@ -192,8 +196,8 @@ class PongBall(pygame.sprite.Sprite):
         self.rect.y = Start.height // 2
 
     def update(self):
-        self.rect.x -= self.vector.x
-        self.rect.y -= self.vector.y
+        self.rect.x += self.velocity
+        self.rect.y += self.velocity
 
 class Move:
     pass
@@ -235,23 +239,41 @@ class PongPaddle(pygame.sprite.Sprite):
 
 class Button(pygame.sprite.Sprite):
 
-    def __init__(self, button_text, font_size):
+    def __init__(self, 
+        background_color, 
+        button_text, 
+        font_size, 
+        position):
+
         super().__init__()
         
         self.font_size = font_size
         self.button_text = button_text
         self.button_font = pygame.font.Font(os.path.join("pong", "font", "slkscrb.ttf"), font_size)
+        self.button_inner_text = self.button_font.render(self.button_text, True, Color.black)
+        self.font_width, self.font_height =  self.button_inner_text.get_width(), self.button_inner_text.get_height()
 
-        self.width = 160
-        self.height = 50
+        self.position = position
+        
+        self.background_color = background_color
 
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(Color.white)
+        self.image = pygame.Surface([self.font_width, self.font_height])
+        self.image.fill(self.background_color)
         self.image.set_colorkey()
 
-        pygame.draw.rect(self.image, Color.white, [0, 0, self.width, self.height])
+        pygame.draw.rect(self.image, self.background_color, [0, 0, self.font_width, self.font_height])
 
         self.rect = self.image.get_rect()
+
+    def render(self, screen):
+        x, y = self.position
+        self.rect.x = x
+        self.rect.y = y
+
+        screen.blit(self.button_inner_text, (x, y))
+
+class Scene:
+    pass
 
 if __name__ == "__main__":
     Start()
