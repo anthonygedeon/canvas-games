@@ -2,7 +2,6 @@ import random
 import os
 
 import pygame
-from pygame import mouse
 
 class Color:
     white = (255, 255, 255)
@@ -256,4 +255,3 @@ class Button(pygame.sprite.Sprite):
 
 if __name__ == "__main__":
     Start()
-    print("HELLO")
