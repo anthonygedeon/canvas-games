@@ -262,8 +262,5 @@ class Button(pygame.sprite.Sprite):
         self.rect.y = y
         screen.blit(self.button_inner_text, (x, y))
 
-class Scene:
-    pass
-
 if __name__ == "__main__":
     Start()
