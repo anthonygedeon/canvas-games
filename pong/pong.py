@@ -1,11 +1,13 @@
 import os
+import sys
 
 import pygame
 
-class Color:
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-    light_gray = (211, 211, 211)
+color = {
+    "white": (255, 255, 255),
+    "black": (0, 0, 0),
+    "lightgray": (211, 211, 211)
+}
 
 class ScoreBoard:
     def __init__(self):
@@ -49,8 +51,8 @@ class Start:
         mouse = Mouse2DPoint()
         
         # Buttons
-        play_button = Button(Color.white, "PLAY", 48, ((self.width - 160) // 2, 180))
-        quit_button = Button(Color.white, "QUIT", 48, ((self.width - 140) // 2, 240))
+        play_button = Button(color.get("white"), "PLAY", 48, ((self.width - 160) // 2, 180))
+        quit_button = Button(color.get("white"), "QUIT", 48, ((self.width - 140) // 2, 240))
 
         # Clock Settings
         self.fps = 60
@@ -87,14 +89,15 @@ class Start:
         while self.running:
 
             if self.is_playing:
+                # Game
                 self.pong_sprites.update()
 
-                self.screen.fill(Color.black)
+                self.screen.fill(color.get("black"))
                 self.pong_sprites.draw(self.screen)
 
                 # Draw Net
                 for box in range(0, self.width, 40):
-                    pygame.draw.rect(self.screen, Color.white, [self.width // 2, box, 10, 20])
+                    pygame.draw.rect(self.screen, color.get("white"), [self.width // 2, box, 10, 20])
 
                 # Collision Detection for Ping Pong Ball
                 pong_ball.handle_collision_detection(left_paddle, right_paddle)
@@ -107,19 +110,19 @@ class Start:
                     pong_ball.spawn((5, 5))
                     score_right.add_point()
 
-                score_1 = font.render(str(score_left.get_current_score), True, Color.white)
-                score_2 = font.render(str(score_right.get_current_score), True, Color.white)
+                score_1 = font.render(str(score_left.get_current_score), True, color.get("white"))
+                score_2 = font.render(str(score_right.get_current_score), True, color.get("white"))
 
                 self.screen.blit(score_1, (((self.width - 58) // 2) - 150, 20))
                 self.screen.blit(score_2, (((self.width - 58) // 2) + 150, 20))
             
             else:
                 # GAME MENU
-                self.screen.fill(Color.black)
+                self.screen.fill(color.get("black"))
                 self.start_menu_sprites.update()
                 self.start_menu_sprites.draw(self.screen)
 
-                title = menu_title.render("Pong", True, Color.white)
+                title = menu_title.render("Pong", True, color.get("white"))
 
                 self.screen.blit(title, (((self.width - title.get_width()) // 2), 20))
                 play_button.render(self.screen)
@@ -141,28 +144,36 @@ class Start:
             pygame.display.update()
 
         pygame.quit()
+        sys.exit()
 
 class PongBall(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
+        self._is_collision = False
+
         self.width = 20
         self.height = self.width
 
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(Color.white)
-        self.image.set_colorkey()
-
-        pygame.draw.rect(self.image, Color.white, [0, 0, self.width, self.height])
-
         self.velocity = pygame.Vector2(5, 5)
 
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(color.get("white"))
+        self.image.set_colorkey()
+
+        pygame.draw.rect(self.image, color.get("white"), [0, 0, self.width, self.height])
         self.rect = self.image.get_rect()
 
+    def _play_sound(self):
+        hit_sound = pygame.mixer.Sound(os.path.join("pong", "sounds", "pong-sound.mp3"))
+        pygame.mixer.Sound.play(hit_sound)
+
     def handle_collision_detection(self, object_a, object_b):
+        
         if self.rect.colliderect(object_a.rect) or self.rect.colliderect(object_b.rect):
-            self.play_sound()
+            self._play_sound()
             self.velocity.x = -self.velocity.x
+            self._is_collision = True
 
         # Handle collision for TOP and BOTTOM window
         if self.rect.y < 0:
@@ -170,20 +181,16 @@ class PongBall(pygame.sprite.Sprite):
         elif self.rect.y > Start.height:
             self.velocity.y = -self.velocity.y
 
-    def play_sound(self):
-        hit_sound = pygame.mixer.Sound(os.path.join("pong", "sounds", "pong-sound.mp3"))
-        pygame.mixer.Sound.play(hit_sound)
-
     def spawn(self, vector):
         x, y = vector
-
         self.velocity = pygame.Vector2(x, y)
         self.rect.x = Start.width // 2
         self.rect.y = Start.height // 2
 
     def update(self):
         self.rect.x += self.velocity.x
-        self.rect.y += self.velocity.y
+        if self._is_collision: # I need the ball to move on the x-axis first and once the ball collides with an object, then start updating the y
+            self.rect.y += self.velocity.y
 
 class Move:
     pass
@@ -199,29 +206,32 @@ class PongPaddle(pygame.sprite.Sprite):
         self.pressed_down = pressed_down
 
         self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(Color.white)
+        self.image.fill(color.get("white"))
         self.image.set_colorkey()
 
-        pygame.draw.rect(self.image, Color.white, [0, 0, self.width, self.height])
-
+        pygame.draw.rect(self.image, color.get("white"), [0, 0, self.width, self.height])
         self.rect = self.image.get_rect()
 
-    def handle_collision_detection(self):
+    def _handle_collision_detection(self):
         if self.rect.bottom > Start.height:
             self.rect.y = Start.height - self.rect.height
         elif self.rect.top < 0:
             self.rect.y = 0
 
+    def _move_up(self, y):
+        self.rect.y -= y
+
+    def _move_down(self, y):
+        self.rect.y += y
+
     def update(self):
         keys = pygame.key.get_pressed()
-
         if keys[self.pressed_up]:
-            self.rect.y -= 10
-
+            self._move_up(10)
         if keys[self.pressed_down]:
-            self.rect.y += 10
+            self._move_down(10)
 
-        self.handle_collision_detection()
+        self._handle_collision_detection()
 
 class Button(pygame.sprite.Sprite):
 
@@ -236,7 +246,7 @@ class Button(pygame.sprite.Sprite):
         self.font_size = font_size
         self.button_text = button_text
         self.button_font = pygame.font.Font(os.path.join("pong", "font", "slkscrb.ttf"), font_size)
-        self.button_inner_text = self.button_font.render(self.button_text, True, Color.black)
+        self.button_inner_text = self.button_font.render(self.button_text, True, color.get("black"))
         self.font_width, self.font_height =  self.button_inner_text.get_width(), self.button_inner_text.get_height()
 
         self.position = position
