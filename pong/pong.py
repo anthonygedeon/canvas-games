@@ -31,8 +31,9 @@ class StartMenuScene(pygame.Surface):
     
         menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
         self.title = menu_title.render("Pong", True, color.get("white"))
+        self.is_showing = True
         
-    def display_screen(self):
+    def display(self):
         self.screen.fill(color.get("black"))
         self.start_menu_sprites.update()
         self.start_menu_sprites.draw(self.screen)
@@ -42,18 +43,72 @@ class StartMenuScene(pygame.Surface):
         self.quit_button.render(self.screen)
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or self.quit_button.is_clicked(event, self.mouse.get_mouse_pos):
+                # Exit
                 pass
             elif self.play_button.is_clicked(event, self.mouse.get_mouse_pos):
-                print("T")
-                pass
-            elif self.quit_button.is_clicked(event, self.mouse.get_mouse_pos):
-                print("B")
-                pass
+                self.is_showing = False
 
 class GameScene(pygame.Surface):
     """"""
-    pass
+    def __init__(self):
+
+        self.pong_ball = PongBall()
+        self.left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
+        self.right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
+        self.score_manager = ScoreManager()
+
+        self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.font = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 72)
+        self.is_running = True
+
+        self.MARGIN_LEFT = self.left_paddle.rect.width
+        self.MARGIN_RIGHT = WINDOW_WIDTH - self.right_paddle.rect.width * 2
+
+        # Sprite Handling
+        self.pong_sprites = pygame.sprite.Group()
+
+        # Handle position of LEFT Paddle
+        self.left_paddle.rect.y = (WINDOW_HEIGHT - self.left_paddle.height) // 2
+        self.left_paddle.rect.x = self.MARGIN_LEFT
+
+        # Handle position of RIGHT Paddle
+        self.right_paddle.rect.y = (WINDOW_HEIGHT - self.right_paddle.height) // 2
+        self.right_paddle.rect.x = self.MARGIN_RIGHT
+
+        # Position the Pong Ball in the center of window
+        self.pong_ball.spawn((5, 5))
+
+        self.pong_sprites.add(self.pong_ball, self.left_paddle, self.right_paddle)
+
+    def display(self):
+        self.pong_sprites.update()
+        self.screen.fill(color.get("black"))
+        self.pong_sprites.draw(self.screen)
+
+        # Collision Detection for Ping Pong Ball
+        self.pong_ball.handle_collision_detection(self.left_paddle, self.right_paddle)
+
+        # Draw Net
+        for box in range(0, WINDOW_WIDTH, 40):
+            pygame.draw.rect(self.screen, color.get("white"), [WINDOW_WIDTH // 2, box, 10, 20])
+
+        # This makes sure that the pong ball is touching the window frame
+        if self.pong_ball.rect.x > WINDOW_WIDTH:
+            self.pong_ball.spawn((-5, 5))
+            self.score_manager.add_left_score()
+        elif self.pong_ball.rect.x < 0:
+            self.pong_ball.spawn((5, 5))
+            self.score_manager.add_right_score()
+
+        if self.score_manager.is_winner():
+            GameOverScene()
+
+        score_1 = self.font.render(str(self.score_manager.get_score[0]), True, color.get("white"))
+        score_2 = self.font.render(str(self.score_manager.get_score[1]), True, color.get("white"))
+
+        self.screen.blit(score_1, (((WINDOW_WIDTH - 58) // 2) - 150, 20))
+        self.screen.blit(score_2, (((WINDOW_WIDTH - 58) // 2) + 150, 20))
 
 class GameOverScene(pygame.Surface):
     """"""
@@ -118,87 +173,23 @@ class Start:
         pygame.key.set_repeat(50, 50)
     
         pygame.display.set_caption("Pong")
-        
-        font = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 72)
-
-        pong_ball = PongBall()
-        left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
-        right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
-        mouse = Mouse2DPoint()
-        score_manager = ScoreManager()
-        
-        # Buttons
-        play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
-        quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
 
         # Screens
+        main_game = GameScene()
         start_menu = StartMenuScene()
 
         # Clock Settings
         self.fps = 60
         self.clock = pygame.time.Clock()
 
-        # Pygame Settings
-        self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
-
         self.is_running = True
-        self.is_playing = False
-
-        self.MARGIN_LEFT = left_paddle.rect.width
-        self.MARGIN_RIGHT = WINDOW_WIDTH - right_paddle.rect.width * 2
-
-        # Sprite Handling
-        self.pong_sprites = pygame.sprite.Group()
-        self.start_menu_sprites = pygame.sprite.Group()
-
-        # Handle position of LEFT Paddle
-        left_paddle.rect.y = (WINDOW_HEIGHT - left_paddle.height) // 2
-        left_paddle.rect.x = self.MARGIN_LEFT
-
-        # Handle position of RIGHT Paddle
-        right_paddle.rect.y = (WINDOW_HEIGHT - right_paddle.height) // 2
-        right_paddle.rect.x = self.MARGIN_RIGHT
-
-        # Position the Pong Ball in the center of window
-        pong_ball.spawn((5, 5))
-
-        self.pong_sprites.add(pong_ball, left_paddle, right_paddle)
-        self.start_menu_sprites.add(play_button, quit_button)
 
         while self.is_running:
 
-            if self.is_playing:
-                # Game
-                self.pong_sprites.update()
-
-                self.screen.fill(color.get("black"))
-                self.pong_sprites.draw(self.screen)
-
-                # Collision Detection for Ping Pong Ball
-                pong_ball.handle_collision_detection(left_paddle, right_paddle)
-
-                # Draw Net
-                for box in range(0, WINDOW_WIDTH, 40):
-                    pygame.draw.rect(self.screen, color.get("white"), [WINDOW_WIDTH // 2, box, 10, 20])
-
-                # This makes sure that the pong ball is touching the window frame
-                if pong_ball.rect.x > WINDOW_WIDTH:
-                    pong_ball.spawn((-5, 5))
-                    score_manager.add_left_score()
-                elif pong_ball.rect.x < 0:
-                    pong_ball.spawn((5, 5))
-                    score_manager.add_right_score()
-
-                if score_manager.is_winner():
-                    GameOverScene()
-
-                score_1 = font.render(str(score_manager.get_score[0]), True, color.get("white"))
-                score_2 = font.render(str(score_manager.get_score[1]), True, color.get("white"))
-
-                self.screen.blit(score_1, (((WINDOW_WIDTH - 58) // 2) - 150, 20))
-                self.screen.blit(score_2, (((WINDOW_WIDTH - 58) // 2) + 150, 20))
+            if start_menu.is_showing:
+                start_menu.display()
             else:
-                start_menu.display_screen()
+                main_game.display()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
