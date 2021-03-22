@@ -17,6 +17,8 @@ color = {
     "lightgray": (211, 211, 211)
 }
 
+current_scene_controller = [True, False, False] # Crude way of displaying certain screens to the user
+
 class StartMenuScene(pygame.Surface):
     """"""
     
@@ -47,7 +49,9 @@ class StartMenuScene(pygame.Surface):
                 # Exit
                 pass
             elif self.play_button.is_clicked(event, self.mouse.get_mouse_pos):
-                self.is_showing = False
+                current_scene_controller[0] = False
+                current_scene_controller[2] = False
+                current_scene_controller[1] = True
 
 class GameScene(pygame.Surface):
     """"""
@@ -103,7 +107,9 @@ class GameScene(pygame.Surface):
             self.score_manager.add_right_score()
 
         if self.score_manager.is_winner():
-            self.is_showing = False
+            current_scene_controller[0] = False
+            current_scene_controller[1] = False
+            current_scene_controller[2] = True
             return
 
         score_1 = self.font.render(str(self.score_manager.get_score[0]), True, color.get("white"))
@@ -120,7 +126,7 @@ class GameOverScene(pygame.Surface):
         self.menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
 
         self.retry_button = Button(color.get("white"), "Retry", 48, ((WINDOW_WIDTH - 160) // 2, 180))
-        self.menu_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
+        self.menu_button = Button(color.get("white"), "MENU", 48, ((WINDOW_WIDTH - 140) // 2, 240))
 
         self.mouse = Mouse2DPoint()
         self.title = self.menu_title.render("Game Over", True, color.get("white"))
@@ -141,9 +147,13 @@ class GameOverScene(pygame.Surface):
             if event.type == pygame.QUIT:
                 pass
             elif self.retry_button.is_clicked(event, self.mouse.get_mouse_pos):
-                pass
+                current_scene_controller[0] = False
+                current_scene_controller[1] = True
+                current_scene_controller[2] = False
             elif self.menu_button.is_clicked(event, self.mouse.get_mouse_pos):
-                pass
+                current_scene_controller[0] = True
+                current_scene_controller[1] = False
+                current_scene_controller[2] = False
 
 class ScoreManager:
     """"""
@@ -160,8 +170,13 @@ class ScoreManager:
 
     def is_winner(self):
         if self.score[0] >= 1 or self.score[1] >= 1:
+            self._reset_score()
             return True
         return False
+
+    def _reset_score(self):
+        self.score[0] = 0
+        self.score[1] = 0
 
     @property
     def get_score(self):
@@ -193,12 +208,16 @@ class Start:
         self.is_running = True
 
         while self.is_running:
+            
+            first, second, third = current_scene_controller
 
-            if start_menu.is_showing:
+            print("Screen 1: {}, Screen 2: {}, Screen 3: {}".format(first, second, third))
+
+            if first:
                 start_menu.display()
-            elif main_game.is_showing:
+            elif second:
                 main_game.display()
-            else:
+            elif third:
                 game_over.display()
 
             for event in pygame.event.get():
