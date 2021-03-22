@@ -3,6 +3,8 @@ import sys
 
 import pygame
 
+pygame.init()
+
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 500
 
@@ -15,25 +17,70 @@ color = {
     "lightgray": (211, 211, 211)
 }
 
-class Scene:
+class StartMenuScene(pygame.Surface):
+    """"""
+
+    start_menu_sprites = pygame.sprite.Group()
+    
+    def __init__(self):
+        play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
+        quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
+        mouse = Mouse2DPoint()
+
+        self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.screen.fill(color.get("black"))
+        self.start_menu_sprites.add(play_button, quit_button)
+
+        menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
+        title = menu_title.render("Pong", True, color.get("white"))
+        self.screen.blit(title, (((WINDOW_WIDTH - title.get_width()) // 2), 20))
+
+        play_button.render(self.screen)
+        quit_button.render(self.screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pass
+            elif play_button.is_clicked(event, mouse.get_mouse_pos):
+                print("T")
+                pass
+            elif quit_button.is_clicked(event, mouse.get_mouse_pos):
+                print("B")
+                pass
+
+        self.start_menu_sprites.draw(self.screen)
+        self.start_menu_sprites.update()
+
+class GameScene(pygame.Surface):
     """"""
     pass
 
-class SceneState:
+class GameOverScene(pygame.Surface):
     """"""
-    pass
+    def __init__(self):
+        self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
 
-class StartMenuScene(SceneState):
-    """"""
-    pass
+        menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
 
-class GameScene(SceneState):
-    """"""
-    pass
+        retry_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
+        quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
+        mouse = Mouse2DPoint()
 
-class GameOverScene(SceneState):
-    """"""
-    pass
+        self.screen.fill(color.get("black"))
+
+        title = menu_title.render("Game Over", True, color.get("white"))
+
+        self.screen.blit(title, (((WINDOW_WIDTH - title.get_width()) // 2), 20))
+        retry_button.render(self.screen)
+        quit_button.render(self.screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.is_running = False
+            elif retry_button.is_clicked(event, mouse.get_mouse_pos):
+                self.is_playing = True
+            elif quit_button.is_clicked(event, mouse.get_mouse_pos):
+                self.is_running = False
 
 class ScoreManager:
     """"""
@@ -47,6 +94,11 @@ class ScoreManager:
     def add_right_score(self):
         """"""
         self.score[1] += 1
+
+    def is_winner(self):
+        if self.score[0] >= 1 or self.score[1] >= 1:
+            return True
+        return False
 
     @property
     def get_score(self):
@@ -63,20 +115,17 @@ class Start:
 
     def __init__(self):
 
-        pygame.init()
         pygame.key.set_repeat(50, 50)
-
-        score_manager = ScoreManager()
     
         pygame.display.set_caption("Pong")
         
         font = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 72)
-        menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
 
         pong_ball = PongBall()
         left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
         right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
         mouse = Mouse2DPoint()
+        score_manager = ScoreManager()
         
         # Buttons
         play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
@@ -137,6 +186,9 @@ class Start:
                     pong_ball.spawn((5, 5))
                     score_manager.add_right_score()
 
+                if score_manager.is_winner():
+                    GameOverScene()
+
                 score_1 = font.render(str(score_manager.get_score[0]), True, color.get("white"))
                 score_2 = font.render(str(score_manager.get_score[1]), True, color.get("white"))
 
@@ -144,24 +196,7 @@ class Start:
                 self.screen.blit(score_2, (((WINDOW_WIDTH - 58) // 2) + 150, 20))
             
             else:
-                # GAME MENU
-                self.screen.fill(color.get("black"))
-                self.start_menu_sprites.update()
-                self.start_menu_sprites.draw(self.screen)
-
-                title = menu_title.render("Pong", True, color.get("white"))
-
-                self.screen.blit(title, (((WINDOW_WIDTH - title.get_width()) // 2), 20))
-                play_button.render(self.screen)
-                quit_button.render(self.screen)
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.is_running = False
-                    elif play_button.is_clicked(event, mouse.get_mouse_pos):
-                        self.is_playing = True
-                    elif quit_button.is_clicked(event, mouse.get_mouse_pos):
-                        self.is_running = False
+                StartMenuScene()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
