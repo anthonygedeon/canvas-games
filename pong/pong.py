@@ -80,6 +80,7 @@ class GameScene(pygame.Surface):
         self.pong_ball.spawn((5, 5))
 
         self.pong_sprites.add(self.pong_ball, self.left_paddle, self.right_paddle)
+        self.is_showing = True
 
     def display(self):
         self.pong_sprites.update()
@@ -102,7 +103,8 @@ class GameScene(pygame.Surface):
             self.score_manager.add_right_score()
 
         if self.score_manager.is_winner():
-            GameOverScene()
+            self.is_showing = False
+            return
 
         score_1 = self.font.render(str(self.score_manager.get_score[0]), True, color.get("white"))
         score_2 = self.font.render(str(self.score_manager.get_score[1]), True, color.get("white"))
@@ -114,28 +116,34 @@ class GameOverScene(pygame.Surface):
     """"""
     def __init__(self):
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
+        self.game_over_sprites = pygame.sprite.Group()
+        self.menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
 
-        menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
+        self.retry_button = Button(color.get("white"), "Retry", 48, ((WINDOW_WIDTH - 160) // 2, 180))
+        self.menu_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
 
-        retry_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
-        quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
-        mouse = Mouse2DPoint()
+        self.mouse = Mouse2DPoint()
+        self.title = self.menu_title.render("Game Over", True, color.get("white"))
+        self.game_over_sprites.add(self.retry_button, self.menu_button)
 
+    def display(self):
         self.screen.fill(color.get("black"))
+        self.game_over_sprites.update()
+        self.game_over_sprites.draw(self.screen)
 
-        title = menu_title.render("Game Over", True, color.get("white"))
+        title = self.menu_title.render("Game Over", True, color.get("white"))
 
         self.screen.blit(title, (((WINDOW_WIDTH - title.get_width()) // 2), 20))
-        retry_button.render(self.screen)
-        quit_button.render(self.screen)
+        self.retry_button.render(self.screen)
+        self.menu_button.render(self.screen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.is_running = False
-            elif retry_button.is_clicked(event, mouse.get_mouse_pos):
-                self.is_playing = True
-            elif quit_button.is_clicked(event, mouse.get_mouse_pos):
-                self.is_running = False
+                pass
+            elif self.retry_button.is_clicked(event, self.mouse.get_mouse_pos):
+                pass
+            elif self.menu_button.is_clicked(event, self.mouse.get_mouse_pos):
+                pass
 
 class ScoreManager:
     """"""
@@ -177,8 +185,8 @@ class Start:
         # Screens
         main_game = GameScene()
         start_menu = StartMenuScene()
+        game_over = GameOverScene()
 
-        # Clock Settings
         self.fps = 60
         self.clock = pygame.time.Clock()
 
@@ -188,8 +196,10 @@ class Start:
 
             if start_menu.is_showing:
                 start_menu.display()
-            else:
+            elif main_game.is_showing:
                 main_game.display()
+            else:
+                game_over.display()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
