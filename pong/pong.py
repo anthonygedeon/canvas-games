@@ -19,37 +19,37 @@ color = {
 
 class StartMenuScene(pygame.Surface):
     """"""
-
-    start_menu_sprites = pygame.sprite.Group()
     
     def __init__(self):
-        play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
-        quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
-        mouse = Mouse2DPoint()
-
+        self.start_menu_sprites = pygame.sprite.Group()
+        self.play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
+        self.quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
+        self.mouse = Mouse2DPoint()
+    
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
-        self.screen.fill(color.get("black"))
-        self.start_menu_sprites.add(play_button, quit_button)
-
+        self.start_menu_sprites.add(self.play_button, self.quit_button)
+    
         menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
-        title = menu_title.render("Pong", True, color.get("white"))
-        self.screen.blit(title, (((WINDOW_WIDTH - title.get_width()) // 2), 20))
+        self.title = menu_title.render("Pong", True, color.get("white"))
+        
+    def display_screen(self):
+        self.screen.fill(color.get("black"))
+        self.start_menu_sprites.update()
+        self.start_menu_sprites.draw(self.screen)
 
-        play_button.render(self.screen)
-        quit_button.render(self.screen)
+        self.screen.blit(self.title, (((WINDOW_WIDTH - self.title.get_width()) // 2), 20))
+        self.play_button.render(self.screen)
+        self.quit_button.render(self.screen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pass
-            elif play_button.is_clicked(event, mouse.get_mouse_pos):
+            elif self.play_button.is_clicked(event, self.mouse.get_mouse_pos):
                 print("T")
                 pass
-            elif quit_button.is_clicked(event, mouse.get_mouse_pos):
+            elif self.quit_button.is_clicked(event, self.mouse.get_mouse_pos):
                 print("B")
                 pass
-
-        self.start_menu_sprites.draw(self.screen)
-        self.start_menu_sprites.update()
 
 class GameScene(pygame.Surface):
     """"""
@@ -131,6 +131,9 @@ class Start:
         play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
         quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
 
+        # Screens
+        start_menu = StartMenuScene()
+
         # Clock Settings
         self.fps = 60
         self.clock = pygame.time.Clock()
@@ -194,9 +197,8 @@ class Start:
 
                 self.screen.blit(score_1, (((WINDOW_WIDTH - 58) // 2) - 150, 20))
                 self.screen.blit(score_2, (((WINDOW_WIDTH - 58) // 2) + 150, 20))
-            
             else:
-                StartMenuScene()
+                start_menu.display_screen()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
