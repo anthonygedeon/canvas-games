@@ -39,9 +39,11 @@ class StartMenuScene(pygame.Surface):
     def display(self):
         self.screen.fill(color.get("black"))
         self.start_menu_sprites.update()
-        self.start_menu_sprites.draw(self.screen)
 
         self.screen.blit(self.title, (((WINDOW_WIDTH - self.title.get_width()) // 2), 20))
+        
+        self.start_menu_sprites.draw(self.screen)
+
         self.play_button.render(self.screen)
         self.quit_button.render(self.screen)
 
