@@ -35,7 +35,7 @@ class StartMenuScene(pygame.Surface):
     
         menu_title = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), 102)
         self.title = menu_title.render("Pong", True, color.get("white"))
-        
+
     def display(self):
         """"""
         self.screen.fill(color.get("black"))
@@ -55,6 +55,7 @@ class StartMenuScene(pygame.Surface):
                 current_scene_controller[0] = False
                 current_scene_controller[1] = True
                 current_scene_controller[2] = False
+
 
 class GameScene(pygame.Surface):
     """"""
@@ -157,6 +158,8 @@ class GameOverScene(pygame.Surface):
                 current_scene_controller[0] = True
                 current_scene_controller[1] = False
                 current_scene_controller[2] = False
+
+        
 
 class ScoreManager:
     """"""
