@@ -21,6 +21,15 @@ is_running = True # TODO: Figure out a way to avoid this global variable
 
 current_scene_controller = [True, False, False] # Crude way of displaying certain screens to the user
 
+def draw_net(screen):
+    """"""
+    width = 10
+    height = 20
+    margin_top = 0
+    for _ in range(0, WINDOW_HEIGHT, (WINDOW_HEIGHT // 40)):
+        pygame.draw.rect(screen, color.get("white"), [WINDOW_WIDTH // 2, margin_top, width, height])
+        margin_top += 20 + height
+
 class StartMenuScene(pygame.Surface):
     """"""
     
@@ -94,9 +103,7 @@ class GameScene(pygame.Surface):
         # Collision Detection for Ping Pong Ball
         self.pong_ball.handle_collision_detection(self.left_paddle, self.right_paddle)
 
-        # Draw Net
-        for box in range(0, WINDOW_WIDTH, 40):
-            pygame.draw.rect(self.screen, color.get("white"), [WINDOW_WIDTH // 2, box, 10, 20])
+        draw_net(self.screen)
 
         # This makes sure that the pong ball is touching the window frame
         if self.pong_ball.rect.x > WINDOW_WIDTH:
