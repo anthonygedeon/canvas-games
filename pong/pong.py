@@ -17,6 +17,8 @@ color = {
     "lightgray": (211, 211, 211)
 }
 
+is_running = True
+
 current_scene_controller = [True, False, False] # Crude way of displaying certain screens to the user
 
 class StartMenuScene(pygame.Surface):
@@ -31,9 +33,8 @@ class StartMenuScene(pygame.Surface):
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
         self.start_menu_sprites.add(self.play_button, self.quit_button)
     
-        menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
+        menu_title = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), 102)
         self.title = menu_title.render("Pong", True, color.get("white"))
-        self.is_showing = True
         
     def display(self):
         self.screen.fill(color.get("black"))
@@ -46,12 +47,12 @@ class StartMenuScene(pygame.Surface):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or self.quit_button.is_clicked(event, self.mouse.get_mouse_pos):
-                # Exit
-                pass
+                global is_running
+                is_running = False
             elif self.play_button.is_clicked(event, self.mouse.get_mouse_pos):
                 current_scene_controller[0] = False
-                current_scene_controller[2] = False
                 current_scene_controller[1] = True
+                current_scene_controller[2] = False
 
 class GameScene(pygame.Surface):
     """"""
@@ -63,13 +64,11 @@ class GameScene(pygame.Surface):
         self.score_manager = ScoreManager()
 
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
-        self.font = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 72)
-        self.is_running = True
+        self.font = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), 72)
 
         self.MARGIN_LEFT = self.left_paddle.rect.width
         self.MARGIN_RIGHT = WINDOW_WIDTH - self.right_paddle.rect.width * 2
 
-        # Sprite Handling
         self.pong_sprites = pygame.sprite.Group()
 
         # Handle position of LEFT Paddle
@@ -82,9 +81,7 @@ class GameScene(pygame.Surface):
 
         # Position the Pong Ball in the center of window
         self.pong_ball.spawn((5, 5))
-
         self.pong_sprites.add(self.pong_ball, self.left_paddle, self.right_paddle)
-        self.is_showing = True
 
     def display(self):
         self.pong_sprites.update()
@@ -123,7 +120,7 @@ class GameOverScene(pygame.Surface):
     def __init__(self):
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
         self.game_over_sprites = pygame.sprite.Group()
-        self.menu_title = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), 102)
+        self.menu_title = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), 72)
 
         self.retry_button = Button(color.get("white"), "Retry", 48, ((WINDOW_WIDTH - 160) // 2, 180))
         self.menu_button = Button(color.get("white"), "MENU", 48, ((WINDOW_WIDTH - 140) // 2, 240))
@@ -133,6 +130,7 @@ class GameOverScene(pygame.Surface):
         self.game_over_sprites.add(self.retry_button, self.menu_button)
 
     def display(self):
+        """"""
         self.screen.fill(color.get("black"))
         self.game_over_sprites.update()
         self.game_over_sprites.draw(self.screen)
@@ -145,7 +143,8 @@ class GameOverScene(pygame.Surface):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pass
+                global is_running
+                is_running = False
             elif self.retry_button.is_clicked(event, self.mouse.get_mouse_pos):
                 current_scene_controller[0] = False
                 current_scene_controller[1] = True
@@ -159,22 +158,26 @@ class ScoreManager:
     """"""
     def __init__(self):
         self.score = [0, 0]
+        self.winning_score = 1
+        self.point_amount = 1
 
     def add_left_score(self):
         """"""
-        self.score[0] += 1
+        self.score[0] += self.point_amount
 
     def add_right_score(self):
         """"""
-        self.score[1] += 1
+        self.score[1] += self.point_amount
 
     def is_winner(self):
-        if self.score[0] >= 1 or self.score[1] >= 1:
+        """"""
+        if self.score[0] >= self.winning_score or self.score[1] >= self.winning_score:
             self._reset_score()
             return True
         return False
 
     def _reset_score(self):
+        """"""
         self.score[0] = 0
         self.score[1] = 0
 
@@ -194,36 +197,32 @@ class Start:
     def __init__(self):
 
         pygame.key.set_repeat(50, 50)
-    
-        pygame.display.set_caption("Pong")
 
         # Screens
-        main_game = GameScene()
-        start_menu = StartMenuScene()
-        game_over = GameOverScene()
+        self.main_game = GameScene()
+        self.start_menu = StartMenuScene()
+        self.game_over = GameOverScene()
 
         self.fps = 60
         self.clock = pygame.time.Clock()
 
-        self.is_running = True
+        while is_running:
 
-        while self.is_running:
+            start_menu_screen, game_screen, game_over_screen = current_scene_controller
             
-            first, second, third = current_scene_controller
-
-            print("Screen 1: {}, Screen 2: {}, Screen 3: {}".format(first, second, third))
-
-            if first:
-                start_menu.display()
-            elif second:
-                main_game.display()
-            elif third:
-                game_over.display()
+            if start_menu_screen:
+                self.start_menu.display()
+            elif game_screen:
+                self.main_game.display()
+            elif game_over_screen:
+                self.game_over.display()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_running = False
 
+            # Seeing sudden frame drops after 30 second gameplay
+            pygame.display.set_caption("Pong - FPS: {}".format(self.clock.tick(self.fps)))
             pygame.display.flip()
             pygame.display.update()
 
@@ -250,7 +249,7 @@ class PongBall(pygame.sprite.Sprite):
 
     @staticmethod
     def _play_sound():
-        hit_sound = pygame.mixer.Sound(os.path.join("pong", "sounds", SOUND))
+        hit_sound = pygame.mixer.Sound(os.path.join("pong", "resources/sounds", SOUND))
         pygame.mixer.Sound.play(hit_sound)
 
     def handle_collision_detection(self, object_a, object_b):
@@ -362,7 +361,7 @@ class Button(pygame.sprite.Sprite):
         
         self.font_size = font_size
         self.button_text = button_text
-        self.button_font = pygame.font.Font(os.path.join("pong", "font", FONT_FAMILY), font_size)
+        self.button_font = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), font_size)
         self.button_inner_text = self.button_font.render(self.button_text, True, color.get("black"))
         self.font_width, self.font_height =  self.button_inner_text.get_width(), self.button_inner_text.get_height()
 
