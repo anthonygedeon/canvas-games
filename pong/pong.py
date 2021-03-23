@@ -105,6 +105,11 @@ class GameScene(pygame.Surface):
 
         draw_net(self.screen)
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                global is_running
+                is_running = False
+
         # This makes sure that the pong ball is touching the window frame
         if self.pong_ball.rect.x > WINDOW_WIDTH:
             self.pong_ball.spawn((-5, 5))
