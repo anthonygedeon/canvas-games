@@ -17,7 +17,7 @@ color = {
     "lightgray": (211, 211, 211)
 }
 
-is_running = True
+is_running = True # TODO: Figure out a way to avoid this global variable
 
 current_scene_controller = [True, False, False] # Crude way of displaying certain screens to the user
 
@@ -37,11 +37,11 @@ class StartMenuScene(pygame.Surface):
         self.title = menu_title.render("Pong", True, color.get("white"))
         
     def display(self):
+        """"""
         self.screen.fill(color.get("black"))
         self.start_menu_sprites.update()
 
         self.screen.blit(self.title, (((WINDOW_WIDTH - self.title.get_width()) // 2), 20))
-        
         self.start_menu_sprites.draw(self.screen)
 
         self.play_button.render(self.screen)
@@ -109,6 +109,8 @@ class GameScene(pygame.Surface):
             current_scene_controller[0] = False
             current_scene_controller[1] = False
             current_scene_controller[2] = True
+            self.right_paddle.reset_position()
+            self.left_paddle.reset_position()
             return
 
         score_1 = self.font.render(str(self.score_manager.get_score[0]), True, color.get("white"))
@@ -124,7 +126,7 @@ class GameOverScene(pygame.Surface):
         self.game_over_sprites = pygame.sprite.Group()
         self.menu_title = pygame.font.Font(os.path.join("pong", "resources/font", FONT_FAMILY), 72)
 
-        self.retry_button = Button(color.get("white"), "Retry", 48, ((WINDOW_WIDTH - 160) // 2, 180))
+        self.retry_button = Button(color.get("white"), "Retry", 48, ((WINDOW_WIDTH - 170) // 2, 180))
         self.menu_button = Button(color.get("white"), "MENU", 48, ((WINDOW_WIDTH - 140) // 2, 240))
 
         self.mouse = Mouse2DPoint()
@@ -303,6 +305,9 @@ class PongPaddle(pygame.sprite.Sprite):
             self.rect.y = WINDOW_HEIGHT - self.rect.height
         elif self.rect.top < 0:
             self.rect.y = 0
+
+    def reset_position(self):
+        self.rect.y = (WINDOW_HEIGHT - self.height) // 2
 
     def _move_up(self, y):
         self.rect.y -= y
