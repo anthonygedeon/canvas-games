@@ -30,13 +30,37 @@ def draw_net(screen):
         pygame.draw.rect(screen, color.get("white"), [WINDOW_WIDTH // 2, margin_top, width, height])
         margin_top += 20 + height
 
+class KinematicObject:
+    
+    def __init__(self):
+        """"""
+        self.x_axis = 5
+        self.y_axis = 5
+        self.velocity = pygame.Vector2(self.x_axis, self.y_axis)
+    
+    def move_up(self, entity):
+        """"""
+        entity.rect.y -= self.velocity.y
+
+    def move_down(self, entity):
+        """"""
+        entity.rect.y += self.velocity.y
+
+    def move_left(self, entity):
+        """"""
+        entity.rect.x -= self.velocity.x
+    
+    def move_right(self, entity):
+        """"""
+        entity.rect.x += self.velocity.x
+
 class StartMenuScene(pygame.Surface):
     """"""
     
     def __init__(self):
         self.start_menu_sprites = pygame.sprite.Group()
-        self.play_button = Button(color.get("white"), "PLAY", 48, ((WINDOW_WIDTH - 160) // 2, 180))
-        self.quit_button = Button(color.get("white"), "QUIT", 48, ((WINDOW_WIDTH - 140) // 2, 240))
+        self.play_button = Button(background_color=color.get("white"), button_text="PLAY", font_size=48, position=((WINDOW_WIDTH - 160) // 2, 180))
+        self.quit_button = Button(background_color=color.get("white"), button_text="QUIT", font_size=48, position=((WINDOW_WIDTH - 140) // 2, 240))
         self.mouse = Mouse2DPoint()
     
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
@@ -71,8 +95,8 @@ class GameScene(pygame.Surface):
     def __init__(self):
 
         self.pong_ball = PongBall()
-        self.left_paddle = PongPaddle(pygame.K_w, pygame.K_s)
-        self.right_paddle = PongPaddle(pygame.K_UP, pygame.K_DOWN)
+        self.left_paddle = Paddle(pygame.K_w, pygame.K_s)
+        self.right_paddle = Paddle(pygame.K_UP, pygame.K_DOWN)
         self.score_manager = ScoreManager()
 
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
@@ -101,7 +125,7 @@ class GameScene(pygame.Surface):
         self.pong_sprites.draw(self.screen)
 
         # Collision Detection for Ping Pong Ball
-        self.pong_ball.handle_collision_detection(self.left_paddle, self.right_paddle)
+        self.pong_ball.handle_paddle_collision(self.left_paddle, self.right_paddle)
 
         draw_net(self.screen)
 
@@ -171,8 +195,6 @@ class GameOverScene(pygame.Surface):
                 current_scene_controller[1] = False
                 current_scene_controller[2] = False
 
-        
-
 class ScoreManager:
     """"""
     def __init__(self):
@@ -240,7 +262,7 @@ class Start:
                 if event.type == pygame.QUIT:
                     self.is_running = False
 
-            # Seeing sudden frame drops after 30 second gameplay
+            # Seeing sudden frame drop after short gameplay
             pygame.display.set_caption("Pong - FPS: {}".format(self.clock.tick(self.fps)))
             pygame.display.flip()
             pygame.display.update()
@@ -248,7 +270,8 @@ class Start:
         pygame.quit()
         sys.exit()
 
-class PongBall(pygame.sprite.Sprite):
+class PongBall(pygame.sprite.Sprite, KinematicObject):
+
     def __init__(self):
         super().__init__()
 
@@ -256,8 +279,6 @@ class PongBall(pygame.sprite.Sprite):
 
         self.width = 20
         self.height = self.width
-
-        self.velocity = pygame.Vector2(5, 5)
 
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(color.get("white"))
@@ -271,39 +292,42 @@ class PongBall(pygame.sprite.Sprite):
         hit_sound = pygame.mixer.Sound(os.path.join("pong", "resources/sounds", SOUND))
         pygame.mixer.Sound.play(hit_sound)
 
-    def handle_collision_detection(self, object_a, object_b):
-        
+    def handle_paddle_collision(self, object_a, object_b):
         if self.rect.colliderect(object_a.rect) or self.rect.colliderect(object_b.rect):
             PongBall._play_sound()
             self.velocity.x = -self.velocity.x
             self._is_collision = True
 
-        # Handle collision for TOP and BOTTOM window
+    def handle_window_collision(self):
         if self.rect.y < 0:
             self.velocity.y = -self.velocity.y
         elif self.rect.y > WINDOW_HEIGHT:
             self.velocity.y = -self.velocity.y
 
-    def spawn(self, vector):
-        x, y = vector
+    def spawn(self, position):
+        x, y = position
         self.velocity = pygame.Vector2(x, y)
         self.rect.x = WINDOW_WIDTH // 2
         self.rect.y = WINDOW_HEIGHT // 2
 
     def update(self):
-        self.rect.x += self.velocity.x
+        self.handle_window_collision()
+        self.move_right(entity=self)
+        print(self.velocity.x, self.velocity.y)
         if self._is_collision: # I need the ball to move on the x-axis first and once the ball collides with an object, then start updating the y
-            self.rect.y += self.velocity.y
+            self.move_down(entity=self)
 
-class Move:
-    pass
+class Paddle(pygame.sprite.Sprite, KinematicObject):
 
-class PongPaddle(pygame.sprite.Sprite):
     def __init__(self, pressed_up, pressed_down):
         super().__init__()
 
         self.width = 20
         self.height = 100
+
+        self.x_axis = 0
+        self.y_axis = 10
+        self.velocity = pygame.Vector2(self.x_axis, self.y_axis)
 
         self.pressed_up = pressed_up
         self.pressed_down = pressed_down
@@ -324,22 +348,16 @@ class PongPaddle(pygame.sprite.Sprite):
     def reset_position(self):
         self.rect.y = (WINDOW_HEIGHT - self.height) // 2
 
-    def _move_up(self, y):
-        self.rect.y -= y
-
-    def _move_down(self, y):
-        self.rect.y += y
-
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[self.pressed_up]:
-            self._move_up(10)
+            self.move_up(entity=self)
         if keys[self.pressed_down]:
-            self._move_down(10)
-
+            self.move_down(entity=self)
+        print(self.x_axis, self.y_axis)
         self._handle_collision_detection()
 
-class Text():
+class Text:
     """"""
 
     def __init__(self, text, color, font_size, font_family):
