@@ -30,28 +30,84 @@ def draw_net(screen):
         pygame.draw.rect(screen, color.get("white"), [WINDOW_WIDTH // 2, margin_top, width, height])
         margin_top += 20 + height
 
-class KinematicObject:
+class Movement:
+    """
+    Movement base class (Should not be instantiated)
+
+    ...
+
+    Attributes
+    ----------
+    x_axis: int
+        x coordinate of entity
+    y_axis: int
+        y coordinate of entity
+    velocity: Vector
+        velocity of entity
+
+    Methods
+    -------
+    move_up(entity): None
+        Moves the entity up on the y axis
+    move_down(entity): None
+        Moves the entity down on the y axis
+    move_left(entity): None
+        Moves the entity left on the x axis
+    move_right(entity): None
+        Moves the entity right on the x axis
+    """
     
     def __init__(self):
-        """"""
         self.x_axis = 5
         self.y_axis = 5
         self.velocity = pygame.Vector2(self.x_axis, self.y_axis)
     
     def move_up(self, entity):
-        """"""
+        """
+        Moves the entity up on the y axis
+
+        Updates the entity position
+
+        Returns
+        -------
+        None
+        """
         entity.rect.y -= self.velocity.y
 
     def move_down(self, entity):
-        """"""
+        """
+        Moves the entity down on the y axis
+
+        Updates the entity position
+
+        Returns
+        -------
+        None
+        """
         entity.rect.y += self.velocity.y
 
     def move_left(self, entity):
-        """"""
+        """
+        Moves the entity left on the x axis
+
+        Updates the entity position
+
+        Returns
+        -------
+        None
+        """
         entity.rect.x -= self.velocity.x
     
     def move_right(self, entity):
-        """"""
+        """
+        Moves the entity right on the x axis
+
+        Updates the entity position
+
+        Returns
+        -------
+        None
+        """
         entity.rect.x += self.velocity.x
 
 class StartMenuScene(pygame.Surface):
@@ -95,8 +151,8 @@ class GameScene(pygame.Surface):
     def __init__(self):
 
         self.pong_ball = PongBall()
-        self.left_paddle = Paddle(pygame.K_w, pygame.K_s)
-        self.right_paddle = Paddle(pygame.K_UP, pygame.K_DOWN)
+        self.left_paddle = Paddle(pressed_up=pygame.K_w, pressed_down=pygame.K_s)
+        self.right_paddle = Paddle(pressed_up=pygame.K_UP, pressed_down=pygame.K_DOWN)
         self.score_manager = ScoreManager()
 
         self.screen = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
@@ -125,9 +181,9 @@ class GameScene(pygame.Surface):
         self.pong_sprites.draw(self.screen)
 
         # Collision Detection for Ping Pong Ball
-        self.pong_ball.handle_paddle_collision(self.left_paddle, self.right_paddle)
+        self.pong_ball.handle_paddle_collision(object_a=self.left_paddle, object_b=self.right_paddle)
 
-        draw_net(self.screen)
+        draw_net(screen=self.screen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -270,7 +326,7 @@ class Start:
         pygame.quit()
         sys.exit()
 
-class PongBall(pygame.sprite.Sprite, KinematicObject):
+class PongBall(pygame.sprite.Sprite, Movement):
 
     def __init__(self):
         super().__init__()
@@ -313,11 +369,10 @@ class PongBall(pygame.sprite.Sprite, KinematicObject):
     def update(self):
         self.handle_window_collision()
         self.move_right(entity=self)
-        print(self.velocity.x, self.velocity.y)
         if self._is_collision: # I need the ball to move on the x-axis first and once the ball collides with an object, then start updating the y
             self.move_down(entity=self)
 
-class Paddle(pygame.sprite.Sprite, KinematicObject):
+class Paddle(pygame.sprite.Sprite, Movement):
 
     def __init__(self, pressed_up, pressed_down):
         super().__init__()
@@ -354,40 +409,7 @@ class Paddle(pygame.sprite.Sprite, KinematicObject):
             self.move_up(entity=self)
         if keys[self.pressed_down]:
             self.move_down(entity=self)
-        print(self.x_axis, self.y_axis)
         self._handle_collision_detection()
-
-class Text:
-    """"""
-
-    def __init__(self, text, color, font_size, font_family):
-        try: 
-            if len(text) == 0:
-                raise Exception
-
-            self.text = text
-            self.color = color
-            self.font_size = font_size
-            self.font_family = font_family
-
-        except Exception:
-            print("No text available")
-
-    def _create_text(self):
-        """"""
-        pass
-
-    def get_width(self):
-        """"""
-        pass
-
-    def get_height(self):
-        """"""
-        pass
-
-    def render(self):
-        """"""
-        pass
 
 class Button(pygame.sprite.Sprite):
 
